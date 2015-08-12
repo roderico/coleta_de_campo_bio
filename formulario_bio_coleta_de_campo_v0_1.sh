@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
-# formulario_bio_coleta_de_campo_v0_1.sh
+# formulario_bio_coleta_de_campo_v0_5.sh
 #
-# 		INFORMAÇÕES
-# VERSÃO     : 0.2
+# 			INFORMAÇÕES
+# VERSÃO     : 0.5
 # DESCRIÇÃO  : Formulário de coleta de campo de biologia (fitofisionomia+solo).
 # DEPENDÊNCIA: dialog
 # NASCIMENTO : 11 de Junho de 2015
@@ -24,46 +24,121 @@
 #  along with this program; if not, write to the Free Software
 #  Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
 #  MA 02110-1301, USA.
+######################################################################
 #
+# CHANGELOG
+#
+# 0.2 (11 de Junho de 2015):
+#	-Criação do esqueleto básico do programa
+#	-Função loopSair() (auto-explicativo... ;) )
+# 0.5 (18 de Junho de 2015):
+#	-Corrigido o problema com "Outros solos"
+#	-Criada a função outroSolo()
+# 1.0 (12 de Agosto de 2015):
+#	-Corrigido detalhes de formatação do cabeçalho do arquivo gerado
+#	-Inclusão das funções help, info (ainda não funcional) e
+#	correção de alguns erros da função loopSair.
+
+# Variáveis:
+# O arquivo que será gerado:
+BD=DATA.csv
 
 
+####### FUNÇÃO HELP  #############
+help() {
+	
+	echo "Uso: $0 [OPÇÃO]"
+	echo "Formulário de campo para biólogos usando dialog."
+	echo ""
+	exit 0
+}
+######## FIM DA FUNÇÃO HELP ###########
+
+
+######## FUNÇÃO INFO ###########
+info() {
+	 clear; sed -n '/INFORMAÇÕES/{:a;/GPLv3/!{N;ba;};p;}' $0 | tr -d '#' | fmt -s
+	 sed -n "/CHANGELOG/{:a;/Variáveis/!{N;ba;};p;}" $0 | tr -d '#' | fmt -s
+	 exit 0
+	 }
+######## FIM DA FUNÇÃO INFO ###########
 
 
 #######  FUNÇÃO LOOP/SAIR    ################
 
 loopSair () {
-	deNovo=$( dialog --stdout --yesno "Quer executar o programa novamente?" 0 0 )
-	case $deNovo in
-	0) main ;; # Apertou OK/Yes: roda main() novamente
-	1) dialog --infobox "O programa foi fechado." 0 0 && exit 0 ;; # Cancelou.
-	# Abaixo: pediu o HELP. extraindo a licença do próprio script.
-	2) dialog --title 'HELP' --infobox "$( head -n 28 $0 | tail -n 25 | tr '#' '\n' )" 0 0 ;;
-	*) dialog --infobox "Aconteceu algo inesperado. O programa foi fechado." 0 0 ;;
+	question=$( dialog \
+		--stdout \
+		--title 'Reiniciar/Fechar/Ajuda/Copyright' \
+		--radiolist 'O que você deseja fazer agora?' \
+		0 0 0 \
+		'y' 'Rodar o programa novamente' off \
+		'n' 'Fechar o programa' off \
+		'h' 'Ajuda' off \
+		'c' 'Copyright' off )
+
+	case $question in
+	y) main ;; 	# roda main() novamente.
+	n) dialog --infobox "O programa foi fechado." 0 0 ;; # Fechou.
+	h) help ;; # chama help (a ser escrito)
+	c) copyright ;; # chama a função copyright e chama o loopSair
+	*) dialog --infobox "Ocorreu algo inesperado. O programa foi fechado." 0 0 ;;
 	esac
- }
+}
+
+
+
+
 ####### FIM DA FUNÇÃO LOOP/SAIR    ################
 
+####### 	FUNÇÃO COPYRIGHT	    ################
+copyright() {
+	clear
+	# lê o cabeçalho e a licença. :3
+	sed -n '/INFORMAÇÕES/{:a;/02110-1301/!{N;ba;};p;}' $0 | tr -d '#' | fmt -s
+
+	exit 0
+}
+####### FIM DA FUNÇÃO COPYRIGHT    ################
+
+###### Função outroSolo()  ####################
+#### A lista de solos não compreende todos os solos. Então:
+outroSolo() {
+outroSolo=$( dialog \
+--stdout \
+--inputbox 'Digite os outros tipos de solo:' \
+0 0 \ )
+# Abaixo: limpo a variável $soloTipo com sed s'ubstitui antes de escrever no arq.
+printf "$soloTipo $outroSolo\t" | sed s/Outros/""/ >> $BD
+	
+}
+#### fim de "Outros solos" ########################################
+
+
+####  Função main()   ########
+
 main () {
+
 ###### Data ########
 	dialog \
 	--stdout \
 	--inputbox 'Digite a data' \
 	0 0 \
-	'dd/MM/2015' \
-	>> DATA.txt
-	printf '\t'>>DATA.txt # Isso é para dar o espaçamento correto dentro do arquivo.
+	'//2015' \
+	>> $BD
+	printf '\t'>>$BD # Isso é para dar o espaçamento correto dentro do arquivo.
 
-##########fim###############
+########## Fim da Data ###############
 
 
-###### iD ########
+############# iD #################
  dialog \
 --stdout \
 --inputbox 'Digite o iD' \
 0 0 \
->> DATA.txt
-printf '\t'>>DATA.txt # Isso é para dar o espaçamento correto dentro do arquivo. \tab
-#######fim##################
+>> $BD
+printf '\t'>>$BD # Isso é para dar o espaçamento correto dentro do arquivo. \tab
+####### fim do iD ##################
 
 
 ###### Coordenada X ########
@@ -71,18 +146,18 @@ dialog \
 --stdout \
 --inputbox 'Digite a Coordenada X' \
 0 0 \
->> DATA.txt
-printf '\t'>>DATA.txt # Isso é para dar o espaçamento correto dentro do arquivo. \tab
-##########fim###############
+>> $BD
+printf '\t'>>$BD # Isso é para dar o espaçamento correto dentro do arquivo. \tab
+##########fim da Coordenada X ###############
 
 ###### Coordenada Y ########
  dialog \
 --stdout \
 --inputbox 'Digite a Coordenada Y' \
 0 0 \
->> DATA.txt
-printf '\t'>>DATA.txt # Isso é para dar o espaçamento correto dentro do arquivo. \tab
-#############fim############
+>> $BD
+printf '\t'>>$BD # Isso é para dar o espaçamento correto dentro do arquivo. \tab
+#############fim da Coordenada Y ############
 
 
 ###### Classes de Uso e Cobertura do Solo ########
@@ -98,9 +173,9 @@ dialog \
 'Edificações' 'Edificações' off \
 'Corpos de água' 'Corpos de água' off \
 'S/Info' 'S/Info' off \
->> DATA.txt
-printf '\t'>>DATA.txt # Isso é para dar o espaçamento correto dentro do arquivo. \tab
-#########################
+>> $BD
+printf '\t'>>$BD # Isso é para dar o espaçamento correto dentro do arquivo. \tab
+######## fim da Classes de Uso e Cobertura do Solo #################
 
 ####### OBSERVAÇÕES adicionais quanto ao solo ############
  dialog \
@@ -108,13 +183,13 @@ printf '\t'>>DATA.txt # Isso é para dar o espaçamento correto dentro do arquiv
 --inputbox 'OBSERVAÇÕES quanto ao solo:' \
 0 0 \
 'Nenhuma' \
->> DATA.txt
-printf '\t'>>DATA.txt # Isso é para dar o espaçamento correto dentro do arquivo. \tab
+>> $BD
+printf '\t'>>$BD # Isso é para dar o espaçamento correto dentro do arquivo. \tab
 
-####################################
+####### fim de OBSERVAÇÕES adicionais quanto ao solo #############################
 
 
-#### Principais espécies vegetais#################
+#### Principais espécies vegetais #################
  dialog \
  --stdout \
 --title 'Seleção dos Componentes' \
@@ -154,12 +229,13 @@ printf '\t'>>DATA.txt # Isso é para dar o espaçamento correto dentro do arquiv
 'Umburana de cheiro' 'Umburana de cheiro'  off \
 'Xique-xique' 'Xique-xique'   off \
 'S/Info' 'S/Info'   off \
- >> DATA.txt
-printf '\t'>>DATA.txt # Isso é para dar o espaçamento correto dentro do arquivo. \tab
-############################################
+ >> $BD
+printf '\t'>>$BD # Isso é para dar o espaçamento correto dentro do arquivo-> \tab
+###### fim de Principais espécies vegetais ######################################
 
 
 #### TIPOS DE SOLO PREDOMINANTE ###############
+
 soloTipo=$( dialog \
  --stdout \
 --title 'Tipo de Solo Predominante' \
@@ -174,21 +250,18 @@ soloTipo=$( dialog \
 'Solo argiloso' '7' off \
 'Presença de serrapilheira' '8' off \
 'Latossolo' '9' off \
+'Outros' '10' off \
 'S/Info' 'Sem informação' off )
-printf " $soloTipo " >> DATA.txt # 
 
-#### A lista acima não abarca "Outros solos". Então: #####
-outroSolo=$( dialog \
---stdout \
---inputbox 'Digite os outros tipos de solo:' \
-0 0 \
-'Nenhum' )
-[ $outroSolo!='Nenhum' ] && printf "$outroSolo\t"
-	
+# Abaixo: descubro se foi selecionado 'Outros'
+# e direciono para a função outroSolo()
+echo $soloTipo | grep -q Outros && outroSolo || printf "$soloTipo\t" >> $BD
 
-############################################
 
-######### ALTURA DO DOSSEL  #############
+###### fim de TIPOS DE SOLO PREDOMINANTE  ###########
+
+
+######### ALTURA DO DOSSEL #############
 
 dossel=$( dialog \
 --stdout \
@@ -202,10 +275,10 @@ dossel=$( dialog \
 'Entre 8 e 10 metros' 'D' off \
  'Herbácea' 'E' off \
 'S/Info' 'F' off  )
-printf "$dossel\t" >> DATA.txt
+printf "$dossel\t" >> $BD
 
 
-###########################################
+##### fim de " ALTURA DO DOSSEL" ############################
 
 
 ### OUTRAS CARACTERÍSTICAS #################
@@ -213,27 +286,54 @@ printf "$dossel\t" >> DATA.txt
 --stdout \
 --inputbox 'Outras características relevantes:' \
 0 0 \
->> DATA.txt
-printf '\n' >> DATA.txt # Para a próxima execução do script.
+>> $BD
+printf '\n' >> $BD # Para a próxima execução do script.
 
-#########################
-# Eterno retorno: função loopsair()
+#### fim de "OUTRAS CARACTERÍSTICAS" #####################
+
+
+#### Eterno retorno: função loopsair() ######
 loopSair
 }
 ######### FIM DA FUNÇÃO main() ##############
 
 
 
-######## CORPO Principal do Script #########
-if [ -e DATA.txt ]; then # Verifica se o arquivo existe
-	if [ "$1" == "--help" ] || [ "$1" == "-h" ]; then
-		head -n 28 $0 | tail -n 25 | tr '#' '\n' # Se pedir o HELP na linha de comando, ele lê o cabeçalho e a licença. :3
-		exit 0
-	else
-	[ -r DATA.txt ] && [ -w DATA.txt ] && main || echo "Você não tem permissão de leitura/escrita sobre esse arquivo. Verifique isso, por favor, antes de rodar o script novamente. =S" # Se o arquivo existir, testa se o usuário atual tem permissão de leitura/escrita, se sim, corre a main(). Se não, dá o aviso de que não possui permissão.
-	fi
+######## CORPO do Script #########
+
+# VERIFICAÇÃO DE DEPENDÊNCIAS
+# Verifica se o sistema tem o dialog instalado. Futuramente posso usar isso prá criar uma variável:
+which dialog && echo "OK! dialog instalado!" || echo "Este programa depende do programa \
+dialog estar instalado, e parece não estar. Instale ou contacte o administrador do sistema." # && exit 0
+
+
+case $1 in
+	-h)				help ;; # chama help (a ser escrito)
+	--help) 		help ;; # chama help (a ser escrito)
+	-c)				copyright ;; # chama a função copyright e chama o loopSair
+	--copyright)	copyright ;; # chama a função copyright e chama o loopSair
+
+	# Abaixo: alquimia prá obter os dados atuais do script.
+	-i)				info ;;
+	--info)				info ;;
+	*) echo "Opção desconhecida" && exit 0 ;;
+esac
+# Verifica se foi dado argumento --help ou -h na linha de comando:
+#if [ "$1" == "--help" ] || [ "$1" == "-h" ]; then
+#	help
+#	exit 0
+#fi
+
+if [ -e $BD ]; then # Verifica se o arquivo existe
+
+	[ -r $BD ] && [ -w $BD ] && main || echo "Você não tem permissão\
+	de leitura/escrita sobre esse arquivo. Verifique isso, por favor, antes de\
+	rodar o script novamente. =S" # Se o arquivo existir, testa se o usuário
+	# atual tem permissão de leitura/escrita, se sim, corre a main(). Se não,
+	# dá o aviso de que não possui permissão.
+
 else # Senão, tenta criar o arquivo com esse cabeçalho:
-	echo -e "DATA\tX\tY\tiD\tClasses de Uso e Cobertura do Solo\tObservações (quanto ao uso do solo)	\tPrincipais espécies vegetais\tTipo de Solo Predominante\tAltura do dossel\tOutras características relevantes:" >>DATA.txt
-	$0 # E chama o próprio script novamente.
+	echo -e "DATA\tiD\tX\tY\tClasses de Uso e Cobertura do Solo\tObservações (quanto ao uso do solo)\t Principais espécies vegetais\t Tipo de Solo Predominante\tAltura do dossel\tOutras características relevantes:" >> $BD
+	$0 # E chama o próprio script.
 fi
 exit 0
