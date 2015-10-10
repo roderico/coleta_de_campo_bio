@@ -1,0 +1,9 @@
+Lista das futuras implementaçoes nesse script (10/Out/2015):
+   -Modularizar;
+   -Implementar recurso de voltar;
+   -Utilizar o dialog --form para diminuir os stress da mudança constante de tela;
+   -Utilizar um arquivo externo, padronizado de onde buscar as opçoes do dialog; isto é,
+    ao invés de o script ter cada uma das espécies, ele carregar de um arquivo externo,
+    para dar maior flexibilidade ao usuário comum que precise adaptá-lo às suas próprias
+    necessidades; 
+   -Melhorar o help e a info.
